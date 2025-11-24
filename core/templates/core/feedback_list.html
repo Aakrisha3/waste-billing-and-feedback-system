@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% block title %}Feedback List{% endblock %}
+
+{% block content %}
+<h2>All Feedback</h2>
+<a href="{% url 'core:add_feedback' %}" class="btn btn-primary">Add Feedback</a>
+<br><br>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Customer</th>
+            <th>Comment</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for f in feedbacks %}
+        <tr>
+            <td>{{ f.id }}</td>
+            <td>{{ f.customer }}</td>
+            <td>{{ f.comment }}</td>
+            <td>{{ f.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No feedback yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+

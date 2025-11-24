@@ -1,0 +1,57 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">{% if customer %}Edit Customer{% else %}Add New Customer{% endif %}</h2>
+
+    <form method="POST" action="">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="name" class="form-label">Customer Name</label>
+            <input type="text" class="form-control" id="name" name="name" 
+                   value="{% if customer %}{{ customer.name }}{% endif %}" 
+                   placeholder="Enter customer name" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" 
+                   value="{% if customer %}{{ customer.email }}{% endif %}" 
+                   placeholder="Enter email address" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input type="text" class="form-control" id="phone" name="phone" 
+                   value="{% if customer %}{{ customer.phone }}{% endif %}" 
+                   placeholder="Enter phone number">
+        </div>
+
+        <div class="mb-3">
+            <label for="address" class="form-label">Address</label>
+            <textarea class="form-control" id="address" name="address" rows="2" 
+                      placeholder="Enter address">{% if customer %}{{ customer.address }}{% endif %}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="customer_type" class="form-label">Customer Type</label>
+            <select class="form-select" id="customer_type" name="customer_type">
+                <option value="Household" {% if customer and customer.customer_type == 'Household' %}selected{% endif %}>Household</option>
+                <option value="Shop" {% if customer and customer.customer_type == 'Shop' %}selected{% endif %}>Shop</option>
+                <option value="Hotel" {% if customer and customer.customer_type == 'Hotel' %}selected{% endif %}>Hotel</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="monthly_rate" class="form-label">Monthly Rate (Rs)</label>
+            <input type="number" class="form-control" id="monthly_rate" name="monthly_rate" 
+                   value="{% if customer %}{{ customer.monthly_rate }}{% else %}0{% endif %}" required>
+            <small class="text-muted">This will be automatically updated based on customer type if left as 0.</small>
+        </div>
+
+        <button type="submit" class="btn btn-success">{% if customer %}Update Customer{% else %}Add Customer{% endif %}</button>
+        <a href="{% url 'core:customer_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
