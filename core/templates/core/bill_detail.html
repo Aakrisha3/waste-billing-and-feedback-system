@@ -7,9 +7,16 @@
     <div class="card mb-3">
         <div class="card-body">
             <p><strong>Customer:</strong> {{ bill.customer.name }}</p>
-            <p><strong>Total Amount:</strong> Rs {{ bill.total_amount }}</p>
-            <p><strong>Paid:</strong> {{ bill.paid }}</p>
             <p><strong>Month:</strong> {{ bill.month }} | <strong>Year:</strong> {{ bill.year }}</p>
+            <p><strong>Date Created:</strong> {{ bill.date_created }}</p>
+            <p><strong>Total Amount:</strong> Rs {{ bill.total_amount }}</p>
+            <p><strong>Status:</strong> 
+                {% if bill.paid %}
+                    <span class="badge bg-success">Paid</span>
+                {% else %}
+                    <span class="badge bg-danger">Unpaid</span>
+                {% endif %}
+            </p>
         </div>
     </div>
 </div>
@@ -28,7 +35,7 @@
         {% for item in bill.items.all %}
         <tr>
             <td>{{ forloop.counter }}</td>
-            <td>{{ item.waste_item.name }}</td>
+            <td>{{ item.waste_item.name }} (Rs {{ item.waste_item.unit_price }}/unit)</td>
             <td>{{ item.quantity }}</td>
             <td>Rs {{ item.amount }}</td>
         </tr>
@@ -37,8 +44,20 @@
             <td colspan="4" class="text-center">No items added.</td>
         </tr>
         {% endfor %}
+        <tr class="table-secondary">
+            <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
+            <td><strong>Rs {{ bill.total_amount }}</strong></td>
+        </tr>
     </tbody>
 </table>
 
-<a href="{% url 'core:bill_list' %}" class="btn btn-secondary mt-3">Back to Bills</a>
+<div class="mt-4">
+    {% if not bill.paid %}
+        <a href="{% url 'core:mark_bill_paid' bill.id %}" class="btn btn-success">Mark as Paid</a>
+    {% else %}
+        <button class="btn btn-success" disabled>Already Paid</button>
+    {% endif %}
+    <a href="{% url 'core:edit_bill' bill.id %}" class="btn btn-warning">Edit</a>
+    <a href="{% url 'core:bill_list' %}" class="btn btn-secondary">Back to Bills</a>
+</div>
 {% endblock %}

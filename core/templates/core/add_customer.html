@@ -1,19 +1,48 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">{% if customer %}Edit Customer{% else %}Add New Customer{% endif %}</h2>
 
-    <form method="POST" action="">
-        {% csrf_token %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header {% if is_edit %}bg-warning text-dark{% else %}bg-primary text-white{% endif %}">
+                    <h2 class="mb-0">
+                        {% if is_edit %}
+                            <i class="fas fa-edit me-2"></i>Edit Customer: {{ customer.name }}
+                        {% else %}
+                            <i class="fas fa-plus me-2"></i>Add New Customer
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
         
+                    <form method="POST" action="">
+                        {% csrf_token %}
+
         <div class="mb-3">
-            <label for="name" class="form-label">Customer Name</label>
-            <input type="text" class="form-control" id="name" name="name" 
-                   value="{% if customer %}{{ customer.name }}{% endif %}" 
-                   placeholder="Enter customer name" required>
+             <label class="form-label">Customer ID</label>
+            {{ form.customer_id }}  
+            <small class="text-muted">
+                  Leave blank to auto-generate customer ID.
+            </small>
         </div>
 
+
+         <div class="mb-3">
+          <label class="form-label">Customer Name</label>
+         {{ form.name }}
+
+        </div>
+       
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
             <input type="email" class="form-control" id="email" name="email" 
@@ -49,9 +78,35 @@
                    value="{% if customer %}{{ customer.monthly_rate }}{% else %}0{% endif %}" required>
             <small class="text-muted">This will be automatically updated based on customer type if left as 0.</small>
         </div>
+        {% if form.errors %}
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+        {% for field in form %}
+            {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
-        <button type="submit" class="btn btn-success">{% if customer %}Update Customer{% else %}Add Customer{% endif %}</button>
-        <a href="{% url 'core:customer_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% if is_edit %}{% url 'core:customer_detail' customer.id %}{% else %}{% url 'core:customer_list' %}{% endif %}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn {% if is_edit %}btn-warning{% else %}btn-success{% endif %}">
+                                {% if is_edit %}
+                                    <i class="fas fa-save me-1"></i>Update Customer
+                                {% else %}
+                                    <i class="fas fa-plus me-1"></i>Add Customer
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

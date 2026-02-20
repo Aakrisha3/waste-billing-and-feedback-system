@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Development Outbox — Sent Emails</h2>
+    <p class="text-muted">This page is visible only when DEBUG=True. Use it to view OTP emails for demonstrations.</p>
+
+    {% if emails %}
+        <div class="list-group">
+            {% for e in emails %}
+            <div class="list-group-item mb-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">To: {{ e.to_email }}</h5>
+                    <small>{{ e.created_at }}</small>
+                </div>
+                <p class="mb-1"><strong>Subject:</strong> {{ e.subject }}</p>
+                <div style="background:#f8f9fa;padding:12px;border-radius:6px;">
+                    <pre style="white-space:pre-wrap;">{{ e.body }}</pre>
+                </div>
+                {% if e.html_body %}
+                <hr>
+                <div>
+                    <strong>HTML preview:</strong>
+                    <div style="border:1px solid #eee;padding:10px;margin-top:8px;">{{ e.html_body|safe }}</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">No sent emails yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

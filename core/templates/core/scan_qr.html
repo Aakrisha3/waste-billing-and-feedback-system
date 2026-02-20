@@ -1,0 +1,298 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-qrcode me-2"></i>QR Code Scanner
+            </h2>
+            <p class="text-muted mb-0">Scan customer QR codes to access their details</p>
+        </div>
+        <div>
+            <a href="{% url 'core:customer_list' %}"
+                class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Customers
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Scanner Section -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-camera me-2"></i>QR Code Scanner
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div id="scanner-container" class="border rounded p-3 bg-light">
+                            <div id="video-container" class="mb-3">
+                                <video id="qr-video" width="100%" height="300" class="border rounded"></video>
+                            </div>
+                            <div id="qr-result" class="alert alert-info d-none">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="result-text"></span>
+                            </div>
+                            <div id="qr-error" class="alert alert-danger d-none">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span id="error-text"></span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button id="start-scan" class="btn btn-success me-2">
+                                <i class="fas fa-play me-1"></i>Start Scanning
+                            </button>
+                            <button id="stop-scan" class="btn btn-danger d-none">
+                                <i class="fas fa-stop me-1"></i>Stop Scanning
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions & Customer Details -->
+        <div class="col-lg-4">
+            <!-- Instructions Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>How to Use
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small mb-0">
+                        <li>Click "Start Scanning" to activate camera</li>
+                        <li>Point camera at customer QR code</li>
+                        <li>Customer details will appear automatically</li>
+                        <li>Click on customer name to view full details</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Customer Details Card -->
+            <div id="customer-card" class="card d-none">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Customer Found
+                    </h6>
+                </div>
+                <div class="card-body" id="customer-details">
+                    <!-- Customer details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Scanner Script -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('qr-video');
+    const resultDiv = document.getElementById('qr-result');
+    const errorDiv = document.getElementById('qr-error');
+    const startBtn = document.getElementById('start-scan');
+    const stopBtn = document.getElementById('stop-scan');
+    const customerCard = document.getElementById('customer-card');
+    const customerDetails = document.getElementById('customer-details');
+
+    let codeReader;
+    let isScanning = false;
+
+    // Initialize QR code reader
+    function initQRReader() {
+        codeReader = new ZXing.BrowserQRCodeReader();
+    }
+
+    // Start scanning
+    startBtn.addEventListener('click', async function() {
+        try {
+            initQRReader();
+            isScanning = true;
+
+            // Hide/show buttons
+            startBtn.classList.add('d-none');
+            stopBtn.classList.remove('d-none');
+
+            // Hide previous results
+            resultDiv.classList.add('d-none');
+            errorDiv.classList.add('d-none');
+            customerCard.classList.add('d-none');
+
+            // Start scanning
+            const result = await codeReader.decodeFromVideoDevice(null, 'qr-video', (result, err) => {
+                if (result) {
+                    handleQRResult(result.text);
+                    stopScanning();
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error(err);
+                }
+            });
+
+        } catch (err) {
+            console.error(err);
+            showError('Failed to access camera. Please ensure camera permissions are granted.');
+        }
+    });
+
+    // Stop scanning
+    stopBtn.addEventListener('click', function() {
+        stopScanning();
+    });
+
+    function stopScanning() {
+        if (codeReader && isScanning) {
+            codeReader.reset();
+            isScanning = false;
+        }
+
+        // Hide/show buttons
+        startBtn.classList.remove('d-none');
+        stopBtn.classList.add('d-none');
+    }
+
+    // Handle QR code result
+    function handleQRResult(qrText) {
+        console.log('QR Code detected:', qrText);
+
+        // Parse QR code data
+        const lines = qrText.split('\n');
+        let customerData = {};
+
+        lines.forEach(line => {
+            const [key, ...valueParts] = line.split(': ');
+            const value = valueParts.join(': ').trim();
+            if (key && value) {
+                const keyMap = {
+                    'Customer ID': 'customer_id',
+                    'Name': 'name',
+                    'Email': 'email',
+                    'Phone': 'phone',
+                    'Type': 'customer_type',
+                    'Monthly Rate': 'monthly_rate'
+                };
+                if (keyMap[key]) {
+                    customerData[keyMap[key]] = value;
+                }
+            }
+        });
+
+        if (customerData.customer_id) {
+            // Show success message
+            document.getElementById('result-text').textContent = `Customer ${customerData.name} found!`;
+            resultDiv.classList.remove('d-none');
+
+            // Fetch full customer details from API
+            fetchCustomerDetails(customerData.customer_id);
+        } else {
+            showError('Invalid QR code format. Please scan a valid customer QR code.');
+        }
+    }
+
+    // Fetch customer details from API
+    function fetchCustomerDetails(customerId) {
+        fetch('{% url "core:get_customer_by_qr" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ customer_id: customerId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+            } else {
+                displayCustomerDetails(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Failed to fetch customer details.');
+        });
+    }
+
+    // Display customer details
+    function displayCustomerDetails(customer) {
+        customerDetails.innerHTML = `
+            <div class="text-center mb-3">
+                <h5 class="mb-1">${customer.name}</h5>
+                <span class="badge bg-primary">${customer.customer_id}</span>
+            </div>
+            <div class="row g-2">
+                <div class="col-12">
+                    <small class="text-muted">Email</small><br>
+                    <a href="mailto:${customer.email}" class="text-decoration-none">${customer.email}</a>
+                </div>
+                <div class="col-12">
+                    <small class="text-muted">Phone</small><br>
+                    ${customer.phone || 'N/A'}
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">Type</small><br>
+                    <span class="badge bg-secondary">${customer.customer_type}</span>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">Monthly Rate</small><br>
+                    Rs${customer.monthly_rate}
+                </div>
+                <div class="col-12">
+                    <small class="text-muted">Address</small><br>
+                    ${customer.address || 'N/A'}
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="{% url 'core:customer_detail' 0 %}".replace('0', customer.id)
+                   class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-eye me-1"></i>View Full Details
+                </a>
+            </div>
+        `;
+        customerCard.classList.remove('d-none');
+    }
+
+    // Show error message
+    function showError(message) {
+        document.getElementById('error-text').textContent = message;
+        errorDiv.classList.remove('d-none');
+        resultDiv.classList.add('d-none');
+        customerCard.classList.add('d-none');
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (codeReader) {
+            codeReader.reset();
+        }
+    });
+});
+</script>
+
+<style>
+#qr-video {
+    max-width: 100%;
+    height: auto;
+}
+
+#scanner-container {
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.alert {
+    width: 100%;
+}
+</style>
+
+{% endblock %}

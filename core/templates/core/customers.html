@@ -1,43 +1,267 @@
 {% extends 'core/base.html' %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">Customer List</h2>
-    <a href="{% url 'core:add_customer' %}" class="btn btn-primary mb-3">+ Add New Customer</a>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Address</th>
-                <th>Customer Type</th>
-                <th>Monthly Rate (Rs)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for customer in customers %}
-            <tr>
-                <td>{{ customer.name }}</td>
-                <td>{{ customer.email }}</td>
-                <td>{{ customer.phone }}</td>
-                <td>{{ customer.address }}</td>
-                <td>{{ customer.customer_type }}</td>
-                <td>{{ customer.monthly_rate }}</td>
-                <td>
-                    <a href="{% url 'core:edit_customer' customer.id %}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{% url 'core:delete_customer' customer.id %}" class="btn btn-sm btn-danger"
-                       onclick="return confirm('Are you sure you want to delete this customer?');">Delete</a>
-                    <a href="{% url 'core:customer_detail' customer.id %}" class="btn btn-sm btn-info">View</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">No customers available.</td>
-            </tr>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Customer List</h2>
+        <a href="{% url 'core:add_customer' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Add New Customer
+        </a>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">
+                        <i class="fas fa-search me-1"></i>Search Customers
+                    </label>
+                    <input type="text" class="form-control" id="search" name="q" 
+                           value="{{ query }}" placeholder="Search by name, email, ID, or phone...">
+                </div>
+                <div class="col-md-4">
+                    <label for="type" class="form-label">
+                        <i class="fas fa-filter me-1"></i>Filter by Type
+                    </label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="">All Types</option>
+                        {% for type_choice in customer_types %}
+                        <option value="{{ type_choice.0 }}" {% if selected_type == type_choice.0 %}selected{% endif %}>
+                            {{ type_choice.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="fas fa-search me-1"></i>Search
+                    </button>
+                    {% if query or selected_type %}
+                    <a href="{% url 'core:customer_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    {% if query or selected_type %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        {% if query %}Searching for: "<strong>{{ query }}</strong>"{% endif %}
+        {% if query and selected_type %} | {% endif %}
+        {% if selected_type %}Type: "<strong>{{ selected_type }}</strong>"{% endif %}
+        - Found <strong>{{ page_obj.paginator.count }}</strong> customer{{ page_obj.paginator.count|pluralize }}
+    </div>
+    {% endif %}
+
+    <!-- Customer Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th><i class="fas fa-id-card me-1"></i>Customer ID</th>
+                            <th><i class="fas fa-user me-1"></i>Name</th>
+                            <th><i class="fas fa-envelope me-1"></i>Email</th>
+                            <th><i class="fas fa-phone me-1"></i>Phone</th>
+                            <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
+                            <th><i class="fas fa-tag me-1"></i>Type</th>
+                            <th><i class="fas fa-rupee-sign me-1"></i>Monthly Rate</th>
+                            <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in page_obj %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ customer.customer_id }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ customer.name }}</strong>
+                            </td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.phone|default:"N/A" }}</td>
+                            <td>{{ customer.address|truncatechars:30|default:"N/A" }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if customer.customer_type == 'Household' %}bg-success
+                                    {% elif customer.customer_type == 'Shop' %}bg-warning
+                                    {% elif customer.customer_type == 'Hotel' %}bg-danger
+                                    {% endif %}">
+                                    {{ customer.customer_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>Rs{{ customer.monthly_rate }}</strong>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'core:customer_detail' customer.id %}" 
+                                       class="btn btn-sm btn-outline-info" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'core:edit_customer' customer.id %}" 
+                                       class="btn btn-sm btn-outline-warning" 
+                                       title="Edit Customer">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'core:delete_customer' customer.id %}" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Delete Customer"
+                                       onclick="return confirm('Are you sure you want to delete {{ customer.name }}?');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No customers found</h5>
+                                <p class="text-muted">
+                                    {% if query or selected_type %}
+                                        Try adjusting your search criteria or 
+                                        <a href="{% url 'core:customer_list' %}">view all customers</a>.
+                                    {% else %}
+                                        <a href="{% url 'core:add_customer' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-1"></i>Add your first customer
+                                        </a>
+                                    {% endif %}
+                                </p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Customer pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_type %}type={{ selected_type }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                    <i class="fas fa-chevron-left me-1"></i>Previous
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-left me-1"></i>Previous
+                </span>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_type %}type={{ selected_type }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
             {% endfor %}
-        </tbody>
-    </table>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_type %}type={{ selected_type }}&{% endif %}page={{ page_obj.next_page_number }}">
+                    Next<i class="fas fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Next<i class="fas fa-chevron-right ms-1"></i>
+                </span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Statistics Footer -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ page_obj.paginator.count }}</h5>
+                    <p class="card-text">Total Customers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">{{ page_obj.paginator.num_pages }}</h5>
+                    <p class="card-text">Pages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ page_obj.start_index }}-{{ page_obj.end_index }}</h5>
+                    <p class="card-text">Current Range</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+.table th {
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 10px;
+}
+
+.pagination .page-link {
+    color: #007bff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.alert {
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+        margin-right: 0;
+    }
+}
+</style>
 {% endblock %}

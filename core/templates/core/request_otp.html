@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Request OTP - Waste Billing System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">🔐 OTP Authentication</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <p class="text-muted mb-4">
+                        Choose how you would like to verify your identity:
+                    </p>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Contact Method</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="contact_type" value="email" id="email_option" checked>
+                                <label class="form-check-label" for="email_option">
+                                    📧 Email
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="contact_type" value="phone" id="phone_option">
+                                <label class="form-check-label" for="phone_option">
+                                    📱 Phone Number
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contact_value" class="form-label fw-bold">
+                                <span id="contact_label">Email Address</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="contact_value"
+                                name="contact_value"
+                                placeholder="Enter your email"
+                                required
+                            >
+                            <small class="text-muted" id="contact_hint">
+                                Enter the email registered with your account
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            Request OTP
+                        </button>
+
+                        <hr class="my-4">
+                        
+                        <p class="text-center text-muted mb-0">
+                            <a href="{% url 'core:admin_login' %}" class="text-decoration-none">
+                                ← Back to Admin Login
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4" role="alert">
+                <strong>ℹ️ How it works:</strong>
+                <ol class="mb-0 mt-2">
+                    <li>Select your preferred contact method (Email or Phone)</li>
+                    <li>Enter your registered contact information</li>
+                    <li>We'll send you a 6-digit OTP code</li>
+                    <li>Enter the code on the next page to verify your identity</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Update placeholder and label based on selected option
+    const emailOption = document.getElementById('email_option');
+    const phoneOption = document.getElementById('phone_option');
+    const contactValue = document.getElementById('contact_value');
+    const contactLabel = document.getElementById('contact_label');
+    const contactHint = document.getElementById('contact_hint');
+
+    function updateContactFields() {
+        if (emailOption.checked) {
+            contactValue.placeholder = 'Enter your email address';
+            contactValue.type = 'email';
+            contactLabel.textContent = 'Email Address';
+            contactHint.textContent = 'Enter the email registered with your account';
+        } else {
+            contactValue.placeholder = 'Enter your 10-digit phone number';
+            contactValue.type = 'tel';
+            contactLabel.textContent = 'Phone Number';
+            contactHint.textContent = 'Enter the phone number registered with your account';
+        }
+        contactValue.value = ''; // Clear the input
+    }
+
+    emailOption.addEventListener('change', updateContactFields);
+    phoneOption.addEventListener('change', updateContactFields);
+</script>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0;
+        padding: 1.5rem;
+    }
+    
+    .btn-primary {
+        border-radius: 10px;
+        font-weight: 600;
+    }
+    
+    .form-check {
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 10px;
+    }
+    
+    .form-check:hover {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}

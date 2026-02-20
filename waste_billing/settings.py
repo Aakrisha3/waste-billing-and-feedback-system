@@ -81,3 +81,23 @@ STATIC_ROOT = BASE_DIR / 'static_root' # used with collectstatic in production
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+# ========================
+# EMAIL CONFIGURATION (Gmail SMTP)
+# ========================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'YOUR_GMAIL@gmail.com'       # <-- Replace with your Gmail address
+EMAIL_HOST_PASSWORD = 'xxxx xxxx xxxx xxxx'     # <-- Replace with your Gmail App Password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ========================
+# OTP SETTINGS
+# ========================
+OTP_EXPIRY_MINUTES = 5  # OTP validity duration
+OTP_MAX_ATTEMPTS = 5     # Maximum verification attempts

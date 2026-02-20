@@ -12,8 +12,10 @@
             <tr>
                 <th>#</th>
                 <th>Customer Name</th>
+                <th>Month</th>
+                <th>Year</th>
                 <th>Total Amount (Rs)</th>
-                <th>Paid</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -22,12 +24,14 @@
             <tr>
                 <td>{{ bill.id }}</td>
                 <td>{{ bill.customer.name }}</td>
+                <td>{{ bill.month }}</td>
+                <td>{{ bill.year }}</td>
                 <td>Rs {{ bill.total_amount }}</td>
                 <td>
                     {% if bill.paid %}
-                         Yes
+                      <span class="badge bg-success">Paid</span>
                     {% else %}
-                         No
+                      <span class="badge bg-danger">Unpaid</span>
                     {% endif %}
                 </td>
                 <td>
